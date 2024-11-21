@@ -15,6 +15,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        setGlobalAppearance()
         return true
     }
 
@@ -33,6 +34,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     // MARK: - Core Data stack
+ 
+
 
     lazy var persistentContainer: NSPersistentContainer = {
         /*
@@ -42,6 +45,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
          error conditions that could cause the creation of the store to fail.
         */
         let container = NSPersistentContainer(name: "iFlex")
+        
         container.loadPersistentStores(completionHandler: { (storeDescription, error) in
             if let error = error as NSError? {
                 // Replace this implementation with code to handle the error appropriately.
@@ -75,6 +79,27 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 fatalError("Unresolved error \(nserror), \(nserror.userInfo)")
             }
         }
+    }
+    
+    func setGlobalAppearance() {
+        //UIView.appearance().backgroundColor = .systemGray6
+        //UIButton.appearance().backgroundColor = .systemGray6
+       // UINavigationBar.appearance().backgroundColor = .systemGray6
+        
+        // Customize UIButton appearance
+        //UIButton.appearance().tintColor = UIColor(named: "AccentColor")
+        //UIButton.appearance().setTitleColor(UIColor(named: "TextColor"), for: .normal)
+        //UIFont.preferredFont(forTextStyle: .headline).withSize(18)
+
+        // Customize UISlider appearance
+        UISlider.appearance().tintColor = UIColor(named: "AccentColor")
+        
+        // Set navigation bar appearance
+                let navigationAppearance = UINavigationBar.appearance()
+        navigationAppearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: ColorManager.textColor]
+                navigationAppearance.tintColor = ColorManager.textColor
+        
+        UILabel().textColor = ColorManager.textColor
     }
 
 }
