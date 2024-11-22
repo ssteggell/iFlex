@@ -14,7 +14,7 @@ class AlbumsCollectionViewController:
     UICollectionViewController, UICollectionViewDelegateFlowLayout, NSFetchedResultsControllerDelegate {
     
     
-    //MARK: Variables.
+    //MARK: Properites
     
     @IBOutlet weak var albumCollectionView: UICollectionView!
     @IBOutlet weak var albumCollectionViewFlowLayout: UICollectionViewFlowLayout!
@@ -22,53 +22,7 @@ class AlbumsCollectionViewController:
     
     var fetchedResultsController: NSFetchedResultsController<FitnessAlbum>!
     
-    func setUpFetchedResultsController() {
-        let fetchRequest: NSFetchRequest<FitnessAlbum> = FitnessAlbum.fetchRequest()
-        let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: true)
-        fetchRequest.sortDescriptors = [sortDescriptor]
-        
-        let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: context, sectionNameKeyPath: nil, cacheName: nil)
-        fetchedResultsController.delegate = self
-    }
-    
-    // MARK: Bar Button Items.
-    
-    lazy var editBtn: UIBarButtonItem = {
-        let barBtnItem = UIBarButtonItem(title: "Select", style: .done, target: self, action: #selector(editAlbums))
-        barBtnItem.tintColor = ColorManager.textColor
-        return barBtnItem
-    }()
-
-    lazy var cancelBtn: UIBarButtonItem = {
-        let barBtnItem = UIBarButtonItem(title: "Cancel", style: .done, target: self, action: #selector(cancelEditing))
-        barBtnItem.tintColor = ColorManager.accentColor
-        return barBtnItem
-    }()
-
-    lazy var deleteBtn: UIBarButtonItem = {
-        let barBtnItem = UIBarButtonItem(barButtonSystemItem: .trash, target: self, action: #selector(deleteAlbums))
-        barBtnItem.tintColor = ColorManager.warningColor
-        return barBtnItem
-    }()
-    
-    lazy var addAlbumBtn: UIBarButtonItem = {
-        let barBtnItem = UIBarButtonItem(title: "Add Album", style: .done, target: self, action: #selector(addAlbum))
-        barBtnItem.tintColor = ColorManager.accentColor
-        return barBtnItem
-    }()
-
-    func setUpToolBar() {
-        navigationItem.leftBarButtonItem = addAlbumBtn
-        navigationItem.rightBarButtonItem = editBtn
-        navigationController?.isToolbarHidden = false
-        if let toolbar = navigationController?.toolbar {
-            toolbar.setBackgroundImage(UIImage(), forToolbarPosition: .any, barMetrics: .default)
-                toolbar.setShadowImage(UIImage(), forToolbarPosition: .any)
-                toolbar.backgroundColor = .clear
-                toolbar.isTranslucent = true
-            }
-    }
+ 
     
     //MARK: ViewDidLoad
     
@@ -77,7 +31,6 @@ class AlbumsCollectionViewController:
         
         albumCollectionView.delegate = self
         albumCollectionView.dataSource = self
-//        ColorManager.shared.applyGradient(to: view)
         
         setUpFetchedResultsController()
         do {
@@ -90,10 +43,60 @@ class AlbumsCollectionViewController:
         setUpToolBar()
         albumCollectionView.allowsMultipleSelection = false
         if let gradientImage = ColorManager.shared.createGradientImage(size: view.bounds.size) {
-           albumCollectionView.backgroundColor = UIColor(patternImage: gradientImage)
+            albumCollectionView.backgroundColor = UIColor(patternImage: gradientImage)
         }
         
     }
+    
+    //MARK: Setup Methods
+    
+    lazy var editBtn: UIBarButtonItem = {
+        let barBtnItem = UIBarButtonItem(title: "Select", style: .done, target: self, action: #selector(editAlbums))
+        barBtnItem.tintColor = ColorManager.textColor
+        return barBtnItem
+    }()
+    
+    lazy var cancelBtn: UIBarButtonItem = {
+        let barBtnItem = UIBarButtonItem(title: "Cancel", style: .done, target: self, action: #selector(cancelEditing))
+        barBtnItem.tintColor = ColorManager.accentColor
+        return barBtnItem
+    }()
+    
+    lazy var deleteBtn: UIBarButtonItem = {
+        let barBtnItem = UIBarButtonItem(barButtonSystemItem: .trash, target: self, action: #selector(deleteAlbums))
+        barBtnItem.tintColor = ColorManager.warningColor
+        return barBtnItem
+    }()
+    
+    lazy var addAlbumBtn: UIBarButtonItem = {
+        let barBtnItem = UIBarButtonItem(title: "Add Album", style: .done, target: self, action: #selector(addAlbum))
+        barBtnItem.tintColor = ColorManager.accentColor
+        return barBtnItem
+    }()
+    
+    func setUpFetchedResultsController() {
+        let fetchRequest: NSFetchRequest<FitnessAlbum> = FitnessAlbum.fetchRequest()
+        let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: true)
+        fetchRequest.sortDescriptors = [sortDescriptor]
+        
+        let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: context, sectionNameKeyPath: nil, cacheName: nil)
+        fetchedResultsController.delegate = self
+    }
+    
+    func setUpToolBar() {
+        navigationItem.leftBarButtonItem = addAlbumBtn
+        navigationItem.rightBarButtonItem = editBtn
+        navigationController?.isToolbarHidden = false
+        if let toolbar = navigationController?.toolbar {
+            toolbar.setBackgroundImage(UIImage(), forToolbarPosition: .any, barMetrics: .default)
+            toolbar.setShadowImage(UIImage(), forToolbarPosition: .any)
+            toolbar.backgroundColor = .clear
+            toolbar.isTranslucent = true
+        }
+    }
+    
+ 
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -106,27 +109,24 @@ class AlbumsCollectionViewController:
         NotificationCenter.default.removeObserver(self)
     }
     
-    //MARK: Editing Albums.
+    //MARK:  User Actions
     
     @objc func addAlbum() {
         print("addalbums button pressed")
         presentNewAlbumAlert()
-
-        
-        
     }
     
     @objc func editAlbums() {
-            toolbarItems = [UIBarButtonItem.flexibleSpace(), deleteBtn]
-            navigationItem.rightBarButtonItem = cancelBtn
-            navigationController?.isToolbarHidden = false
-            editBtn.isEnabled = false
-            addAlbumBtn.isEnabled = false
+        toolbarItems = [UIBarButtonItem.flexibleSpace(), deleteBtn]
+        navigationItem.rightBarButtonItem = cancelBtn
+        navigationController?.isToolbarHidden = false
+        editBtn.isEnabled = false
+        addAlbumBtn.isEnabled = false
         albumCollectionView.allowsMultipleSelection = true
         albumCollectionView.reloadData()
-            print("Entered album editing mode")
+        print("Entered album editing mode")
     }
-  
+    
     @objc func cancelEditing() {
         print("Cancel pressed")
         exitEditMode()
@@ -135,28 +135,24 @@ class AlbumsCollectionViewController:
     
     @objc func deleteAlbums() {
         print("Deleting Albums")
-
+        
         guard let selectedIndexPaths = albumCollectionView.indexPathsForSelectedItems else {
             print("No items selected for deletion")
             return
         }
-
+        
         print("Selected items for deletion: \(selectedIndexPaths)")
-
+        
         let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-
-        // Temporarily disable delegate to prevent automatic UI updates
         fetchedResultsController.delegate = nil
-
-        // Sort the selected index paths in descending order to delete safely
         let sortedIndexPaths = selectedIndexPaths.sorted { $0.item > $1.item }
-
+        
         context.performAndWait {
             for indexPath in sortedIndexPaths {
                 let albumToDelete = fetchedResultsController.object(at: indexPath)
                 context.delete(albumToDelete)
             }
-
+            
             do {
                 try context.save()
                 print("Successfully deleted albums")
@@ -164,22 +160,18 @@ class AlbumsCollectionViewController:
                 print("Failed to delete albums: \(error)")
             }
         }
-
-        // Manually refetch data and reload collection view
         do {
             try fetchedResultsController.performFetch()
             albumCollectionView.reloadData()
         } catch {
             print("Failed to refetch after deletion: \(error)")
         }
-
-        // Re-enable the delegate
         fetchedResultsController.delegate = self
-
-        // Exit editing mode after deletion
         exitEditMode()
     }
-
+    
+    //MARK: Supporting methods
+    
     func exitEditMode() {
         toolbarItems = nil
         navigationItem.rightBarButtonItem = editBtn
@@ -193,13 +185,8 @@ class AlbumsCollectionViewController:
     }
     
     @objc func updateAlbumCoverPhoto() {
-//        print("fetching data to update album cover photo")
-//        do {
-//           try fetchedResultsController.performFetch()
-//            albumCollectionView.reloadData()
-//        } catch {
-//            print("Error updating album cover photo data: \(error)")
-//        }
+        //delete function
+        
     }
     
     func deselectAllItems(animated: Bool) {
@@ -212,30 +199,25 @@ class AlbumsCollectionViewController:
             print(("Deselected item: \(indexPath)"))
         }
     }
-
     
     func presentNewAlbumAlert() {
         let alert = UIAlertController(title: "Add New Album", message: "Enter name for new album", preferredStyle: .alert)
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
-            // Remove observer after alert is dismissed
             NotificationCenter.default.removeObserver(self!, name: UITextField.textDidChangeNotification, object: alert.textFields?.first)
         }
         let saveAction = UIAlertAction(title: "Save", style: .default) { [weak self] action in
             if let name = alert.textFields?.first?.text {
                 self?.addAlbumToCoreData(name: name)
             }
-            // Remove observer after save action
             NotificationCenter.default.removeObserver(self!, name: UITextField.textDidChangeNotification, object: alert.textFields?.first)
         }
         saveAction.isEnabled = false
-
-        // Add a text field to the alert
+        
         alert.addTextField { textField in
             textField.placeholder = "Name"
             textField.autocapitalizationType = .words
             textField.translatesAutoresizingMaskIntoConstraints = false
-
-            // Add observer for text changes
+            
             NotificationCenter.default.addObserver(forName: UITextField.textDidChangeNotification, object: textField, queue: .main) { [weak saveAction] _ in
                 if let text = textField.text, !text.isEmpty {
                     saveAction?.isEnabled = true
@@ -246,34 +228,28 @@ class AlbumsCollectionViewController:
         }
         alert.addAction(cancelAction)
         alert.addAction(saveAction)
-
-        // Present the alert
         present(alert, animated: true)
     }
     
-
-    
     func addAlbumToCoreData(name: String) {
-                let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-                let newAlbum = FitnessAlbum(context: context)
+        let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+        let newAlbum = FitnessAlbum(context: context)
         
-                newAlbum.name = name
-                newAlbum.creationDate = Date()
+        newAlbum.name = name
+        newAlbum.creationDate = Date()
         
-                do {
-                    try context.save()
-        
-                } catch {
-                    print("Failed to save Album: \(error)")
-                }
+        do {
+            try context.save()
+            
+        } catch {
+            print("Failed to save Album: \(error)")
+        }
         
     }
-        
-        
-
+    
     
     //MARK: Collection View Settings.
-
+    
     override func numberOfSections(in collectionView: UICollectionView) -> Int {
         return 1
     }
@@ -283,7 +259,7 @@ class AlbumsCollectionViewController:
         print("Number of items in section \(section): \(itemCount)")
         return itemCount
     }
-
+    
     
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let album = fetchedResultsController.object(at: indexPath)
@@ -294,7 +270,7 @@ class AlbumsCollectionViewController:
         
         // Set album photo or default image
         if let albumPhotoData = album.coverPhoto, let image = UIImage(data: albumPhotoData) {
-                cell.albumPhoto.image = image
+            cell.albumPhoto.image = image
             print("Setting up first image!")
         } else {
             cell.albumPhoto.image = UIImage(named: "defaultImage")
@@ -304,50 +280,34 @@ class AlbumsCollectionViewController:
         cell.allowsMultipleSelection = albumCollectionView.allowsMultipleSelection
         return cell
     }
-
+    
     func setViewLayout() {
-
+        
         albumCollectionViewFlowLayout.scrollDirection = .vertical
         albumCollectionViewFlowLayout.minimumLineSpacing = 5
         albumCollectionViewFlowLayout.minimumInteritemSpacing = 10
         albumCollectionViewFlowLayout.sectionInset = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         albumCollectionViewFlowLayout.collectionView?.backgroundView = UIView()
         albumCollectionView.sizeToFit()
-        
-       
     }
     
-   
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let totalWidth = collectionView.bounds.width
         let numberOfCellsPerRow: CGFloat = 2
         let padding: CGFloat = 10 // This should match your `minimumInteritemSpacing`
         let totalPadding = (numberOfCellsPerRow + 1) * padding
-
+        
         let individualWidth = (totalWidth - totalPadding) / numberOfCellsPerRow
         let individualHeight = individualWidth + 40 // Adding extra space for the label (adjust as needed)
-
+        
         return CGSize(width: individualWidth, height: individualHeight)
     }
-
     
-//    private func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
-//        let totalwidth = collectionView.bounds.size.width;
-//        let numberOfCellsPerRow = 2
-//        let oddEven = indexPath.row / numberOfCellsPerRow % 2
-//        let dimensions = CGFloat(Int(totalwidth) / numberOfCellsPerRow)
-//        if (oddEven == 0) {
-//            return CGSize(width: dimensions, height: dimensions)
-//        } else {
-//            return CGSize(width: dimensions, height: dimensions / 2)
-//        }
-//    }
-
-    
+    //delete?
     func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-       // albumCollectionView.performBatchUpdates(nil, completion: nil)
+        // albumCollectionView.performBatchUpdates(nil, completion: nil)
     }
-
+    
     func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
         switch type {
         case .insert:
@@ -374,39 +334,29 @@ class AlbumsCollectionViewController:
             fatalError("Unknown change type in NSFetchedResultsController")
         }
     }
-
-
+    
+    //delete?
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         //albumCollectionView.performBatchUpdates(nil, completion: nil)
     }
-
-
-
+    
     
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if albumCollectionView.allowsMultipleSelection {
-            // Provide visual feedback if necessary
             print("Selected cell at indexPath \(indexPath)")
         } else {
-            // Handle normal navigation or other actions
             collectionView.deselectItem(at: indexPath, animated: true)
         }
     }
-
+    
     override func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
-//        if isEditing {
-//            // Provide visual feedback if necessary
-//            print("Deselected cell at indexPath \(indexPath)")
-//        }
+        
     }
-
-
-
+    
     
     //MARK: Segue
     
     override func shouldPerformSegue(withIdentifier identifier: String, sender: Any?) -> Bool {
-        // Only perform the segue if multiple selection is disabled and at least one item is selected
         if identifier == "albumDetailSegue" {
             return !collectionView.allowsMultipleSelection && (collectionView.indexPathsForSelectedItems?.isEmpty == false)
         }
@@ -420,13 +370,12 @@ class AlbumsCollectionViewController:
             return
         }
         
-        // Check if the edit button is enabled
         if editBtn.isEnabled {
-            // Pass the album object to the destination view controller
             vc.albums = fetchedResultsController.object(at: indexPath)
         }
     }
     
+    //End of AlbumsCollectionViewController
 }
 
 

@@ -11,7 +11,7 @@ import CoreData
 
 class PhotosCollectionViewController: UICollectionViewController, NSFetchedResultsControllerDelegate, UIImagePickerControllerDelegate & UINavigationControllerDelegate {
     
-    //MARK: OUTLETS
+    //MARK: Properties
     weak var albums: FitnessAlbum!
     @IBOutlet weak var photosCollectionViewFlowLayout: UICollectionViewFlowLayout!
     @IBOutlet var photosCollectionView: UICollectionView!
@@ -20,67 +20,6 @@ class PhotosCollectionViewController: UICollectionViewController, NSFetchedResul
     var photoThumbnail: UIImage!
     var photoDate = Date()
     var fetchedResultsController: NSFetchedResultsController<ProgressPhotos>!
-    
-    //MARK: FETCH Request
-    
-    func setUpFetchedResultsController() {
-        let fetchRequest: NSFetchRequest<ProgressPhotos> = ProgressPhotos.fetchRequest()
-        
-        // Sort by creation date descending to get the latest photos first
-        let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: true)
-        fetchRequest.sortDescriptors = [sortDescriptor]
-        
-        // Add a predicate to only fetch photos for the current album
-        fetchRequest.predicate = NSPredicate(format: "album == %@", albums)
-        
-        let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: context, sectionNameKeyPath: nil, cacheName: nil)
-        fetchedResultsController.delegate = self
-        print("Number of photos in album: \(fetchedResultsController.fetchedObjects?.count ?? 0)")
-    }
-    
-    
-    // MARK: Bar Button Items.
-    
-    lazy var editBtn: UIBarButtonItem = {
-        let barBtnItem = UIBarButtonItem(title: "Select", style: .done, target: self, action: #selector(editPhotos))
-        barBtnItem.tintColor = ColorManager.textColor
-        return barBtnItem
-    }()
-    
-    lazy var cancelBtn: UIBarButtonItem = {
-        let barBtnItem = UIBarButtonItem(title: "Cancel", style: .done, target: self, action: #selector(cancelEditing))
-        barBtnItem.tintColor = ColorManager.accentColor
-        return barBtnItem
-    }()
-    
-    lazy var deleteBtn: UIBarButtonItem = {
-        let barBtnItem = UIBarButtonItem(barButtonSystemItem: .trash, target: self, action: #selector(deletePhotos))
-        barBtnItem.tintColor = .red
-        return barBtnItem
-    }()
-    
-    lazy var cameraBtn: UIBarButtonItem = {
-        let barBtnItem = UIBarButtonItem(barButtonSystemItem: .camera, target: self, action: #selector(cameraSegue))
-        barBtnItem.tintColor = ColorManager.accentColor
-        return barBtnItem
-    }()
-    
-    lazy var compareBtn: UIBarButtonItem = {
-        let barBtnItem = UIBarButtonItem(title: "Compare", style: .done, target: self, action: #selector(comparePhotos))
-        barBtnItem.tintColor = ColorManager.accentColor
-        return barBtnItem
-    }()
-    
-    func setUpToolBar() {
-        
-        navigationItem.rightBarButtonItem = editBtn
-        toolbarItems = [.flexibleSpace(), cameraBtn, .flexibleSpace()]
-        navigationController?.isToolbarHidden = false
-        
-        
-    }
-    
     
     //MARK: ViewDidLoad
     
@@ -116,15 +55,65 @@ class PhotosCollectionViewController: UICollectionViewController, NSFetchedResul
     }
     
     
+    //MARK: Setup Methods
     
-    //MARK: Editing Photos
+    func setUpFetchedResultsController() {
+        let fetchRequest: NSFetchRequest<ProgressPhotos> = ProgressPhotos.fetchRequest()
+        let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: true)
+        fetchRequest.sortDescriptors = [sortDescriptor]
+        fetchRequest.predicate = NSPredicate(format: "album == %@", albums)
+        
+        let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: context, sectionNameKeyPath: nil, cacheName: nil)
+        fetchedResultsController.delegate = self
+        print("Number of photos in album: \(fetchedResultsController.fetchedObjects?.count ?? 0)")
+    }
+    
+    
+    lazy var editBtn: UIBarButtonItem = {
+        let barBtnItem = UIBarButtonItem(title: "Select", style: .done, target: self, action: #selector(editPhotos))
+        barBtnItem.tintColor = ColorManager.textColor
+        return barBtnItem
+    }()
+    
+    lazy var cancelBtn: UIBarButtonItem = {
+        let barBtnItem = UIBarButtonItem(title: "Cancel", style: .done, target: self, action: #selector(cancelEditing))
+        barBtnItem.tintColor = ColorManager.accentColor
+        return barBtnItem
+    }()
+    
+    lazy var deleteBtn: UIBarButtonItem = {
+        let barBtnItem = UIBarButtonItem(barButtonSystemItem: .trash, target: self, action: #selector(deletePhotos))
+        barBtnItem.tintColor = .red
+        return barBtnItem
+    }()
+    
+    lazy var cameraBtn: UIBarButtonItem = {
+        let barBtnItem = UIBarButtonItem(barButtonSystemItem: .camera, target: self, action: #selector(cameraSegue))
+        barBtnItem.tintColor = ColorManager.accentColor
+        return barBtnItem
+    }()
+    
+    lazy var compareBtn: UIBarButtonItem = {
+        let barBtnItem = UIBarButtonItem(title: "Compare", style: .done, target: self, action: #selector(comparePhotos))
+        barBtnItem.tintColor = ColorManager.accentColor
+        return barBtnItem
+    }()
+    
+    func setUpToolBar() {
+        navigationItem.rightBarButtonItem = editBtn
+        toolbarItems = [.flexibleSpace(), cameraBtn, .flexibleSpace()]
+        navigationController?.isToolbarHidden = false
+    }
+    
+    
+    //MARK: User Actions
     
     @objc func editPhotos() {
         editBtn.isEnabled = false
         navigationItem.rightBarButtonItem = cancelBtn
         navigationItem.leftBarButtonItem?.isEnabled = false
         toolbarItems = [compareBtn, .flexibleSpace(), deleteBtn]
-        //compareBtn.isEnabled = false
         photosCollectionView.allowsMultipleSelection = true
         photosCollectionView.reloadData()
     }
@@ -137,7 +126,6 @@ class PhotosCollectionViewController: UICollectionViewController, NSFetchedResul
     
     @objc func deletePhotos() {
         print("Deleting Albums")
-        
         guard let selectedIndexPaths = photosCollectionView.indexPathsForSelectedItems else {
             print("No items selected for deletion")
             return
@@ -147,10 +135,7 @@ class PhotosCollectionViewController: UICollectionViewController, NSFetchedResul
         
         let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
         
-        // Temporarily disable delegate to prevent automatic UI updates
         fetchedResultsController.delegate = nil
-        
-        // Sort the selected index paths in descending order to delete safely
         let sortedIndexPaths = selectedIndexPaths.sorted { $0.item > $1.item }
         
         context.performAndWait {
@@ -158,7 +143,6 @@ class PhotosCollectionViewController: UICollectionViewController, NSFetchedResul
                 let photosToDelete = fetchedResultsController.object(at: indexPath)
                 context.delete(photosToDelete)
             }
-            
             do {
                 try context.save()
                 print("Successfully deleted albums")
@@ -166,8 +150,6 @@ class PhotosCollectionViewController: UICollectionViewController, NSFetchedResul
                 print("Failed to delete albums: \(error)")
             }
         }
-        
-        // Manually refetch data and reload collection view
         do {
             try fetchedResultsController.performFetch()
             photosCollectionView.reloadData()
@@ -175,46 +157,43 @@ class PhotosCollectionViewController: UICollectionViewController, NSFetchedResul
         } catch {
             print("Failed to refetch after deletion: \(error)")
         }
-        
-        // Re-enable the delegate
         fetchedResultsController.delegate = self
-        
-        // Exit editing mode after deletion
         exitEditMode()
     }
     
+    //MARK: Segue Compare Photos
     @objc func comparePhotos() {
         guard let selectedIndexPaths = photosCollectionView.indexPathsForSelectedItems, selectedIndexPaths.count == 2 else {
-                print("Please select exactly two photos to compare.")
-                return
-            }
-
-
-            // Fetch the selected photos from the fetchedResultsController
-            let firstPhoto = fetchedResultsController.object(at: selectedIndexPaths[0])
-            let secondPhoto = fetchedResultsController.object(at: selectedIndexPaths[1])
-
-            // Ensure both photos have image data
-            guard let firstImageData = firstPhoto.imageData, let secondImageData = secondPhoto.imageData,
-                  let firstImage = UIImage(data: firstImageData), let secondImage = UIImage(data: secondImageData) else {
-                print("Error fetching selected photos.")
-                return
-            }
-
-            // Instantiate the ComparisonViewController
-            let comparisonVC = ComparisonViewController()
-            comparisonVC.leftImage = firstImage
+            print("Please select exactly two photos to compare.")
+            return
+        }
+        
+        
+        // Fetch the selected photos from the fetchedResultsController
+        let firstPhoto = fetchedResultsController.object(at: selectedIndexPaths[0])
+        let secondPhoto = fetchedResultsController.object(at: selectedIndexPaths[1])
+        
+        // Ensure both photos have image data
+        guard let firstImageData = firstPhoto.imageData, let secondImageData = secondPhoto.imageData,
+              let firstImage = UIImage(data: firstImageData), let secondImage = UIImage(data: secondImageData) else {
+            print("Error fetching selected photos.")
+            return
+        }
+        exitEditMode()
+        
+        let comparisonVC = ComparisonViewController()
+        comparisonVC.leftImage = firstImage
         comparisonVC.leftDate = firstPhoto.creationDate
         comparisonVC.rightImage = secondImage
         comparisonVC.rightDate = secondPhoto.creationDate
-
-            // Push the comparison view controller to the navigation stack
-            navigationController?.pushViewController(comparisonVC, animated: true)
         
+        // Push the comparison view controller to the navigation stack
+        navigationController?.pushViewController(comparisonVC, animated: true)
     }
     
+    //MARK: Helper Methods
+    
     func exitEditMode() {
-        
         navigationItem.rightBarButtonItem = editBtn
         navigationItem.leftBarButtonItem?.isEnabled = true
         editBtn.isEnabled = true
@@ -232,7 +211,6 @@ class PhotosCollectionViewController: UICollectionViewController, NSFetchedResul
         for indexPath in selectedItems {
             photosCollectionView.deselectItem(at: indexPath, animated: animated)
             print(("Deselected item: \(indexPath)"))
-            // }
         }
     }
     
@@ -258,7 +236,6 @@ class PhotosCollectionViewController: UICollectionViewController, NSFetchedResul
     @objc func backButtonTapped() {
         navigationController?.popViewController(animated: true)
     }
-    
     
     func updateAlbumCoverPhoto() {
         print("Updating Album Cover Photo in Function")
@@ -287,15 +264,8 @@ class PhotosCollectionViewController: UICollectionViewController, NSFetchedResul
         }
     }
     
-    
-    
-    
-    
-    
     //MARK: Set Up Collection View
     
-    
-    //Functioning Code:
     func setViewLayout() {
         let layout: UICollectionViewFlowLayout = UICollectionViewFlowLayout()
         let width = UIScreen.main.bounds.width
@@ -305,8 +275,6 @@ class PhotosCollectionViewController: UICollectionViewController, NSFetchedResul
         layout.minimumLineSpacing = 0
         collectionView!.collectionViewLayout = layout
     }
-    
-    
     
     func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
         let totalwidth = collectionView.bounds.size.width;
@@ -325,7 +293,6 @@ class PhotosCollectionViewController: UICollectionViewController, NSFetchedResul
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CollectionPhotoCell", for: indexPath) as! CollectionPhotoCell
         
         print("Printing Photos Data: \(photos.imageData!)")
-        
         // Set album name
         cell.img.image = UIImage(data: photos.imageData! as Data)
         cell.photoDate = photos.creationDate!
@@ -344,7 +311,7 @@ class PhotosCollectionViewController: UICollectionViewController, NSFetchedResul
     func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         collectionView.performBatchUpdates(nil, completion: nil)
     }
-
+    
     func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
         switch type {
         case .insert:
@@ -367,50 +334,50 @@ class PhotosCollectionViewController: UICollectionViewController, NSFetchedResul
             fatalError("Unknown change type in NSFetchedResultsController")
         }
     }
-
+    
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         collectionView.performBatchUpdates(nil, completion: nil)
     }
-
-    //MARK: Segue
+    
+    //MARK: Set up Segue
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?)  {
-         if (segue.identifier == "showCameraView") {
-             let destViewController : CameraViewController = segue.destination as! CameraViewController
-             destViewController.albums = self.albums
-             print("prepare ran for Camera View")
-         }
+        if (segue.identifier == "showCameraView") {
+            let destViewController : CameraViewController = segue.destination as! CameraViewController
+            destViewController.albums = self.albums
+            print("prepare ran for Camera View")
+        }
         
         else if segue.identifier == "showPhotoPage" {
-                 
-                }
-            }
+            
+        }
+    }
     
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-           if editBtn.isEnabled == false {
-               let cell = collectionView.cellForItem(at: indexPath)
-                   cell?.layer.borderColor = UIColor.blue.cgColor
-                   cell?.layer.borderWidth = 3
-                   cell?.isSelected = true
-           } else {
-               // Instantiate the PhotoPageViewController and present it
-                       let pageVC = PhotoPageViewController(transitionStyle: .scroll, navigationOrientation: .horizontal, options: nil)
-
-                       // Pass the photo data to the page view controller
-               if let fetchedObjects = fetchedResultsController.fetchedObjects {
-                   let photos = fetchedObjects.compactMap { UIImage(data: $0.imageData!) }
-                   let photoDates = fetchedObjects.compactMap { $0.creationDate }
-                   let selectedAlbum = self.albums
-                   
-                   pageVC.albums = selectedAlbum
-                   pageVC.photos = photos
-                   pageVC.photoDates = photoDates
-                   pageVC.currentIndex = indexPath.item // Start from the tapped photo
-                   navigationController?.pushViewController(pageVC, animated: true)
-               }
-           }
+        if editBtn.isEnabled == false {
+            let cell = collectionView.cellForItem(at: indexPath)
+            cell?.layer.borderColor = UIColor.blue.cgColor
+            cell?.layer.borderWidth = 3
+            cell?.isSelected = true
+        } else {
+            // Instantiate the PhotoPageViewController and present it
+            let pageVC = PhotoPageViewController(transitionStyle: .scroll, navigationOrientation: .horizontal, options: nil)
+            
+            // Pass the photo data to the page view controller
+            if let fetchedObjects = fetchedResultsController.fetchedObjects {
+                let photos = fetchedObjects.compactMap { UIImage(data: $0.imageData!) }
+                let photoDates = fetchedObjects.compactMap { $0.creationDate }
+                let selectedAlbum = self.albums
+                
+                pageVC.albums = selectedAlbum
+                pageVC.photos = photos
+                pageVC.photoDates = photoDates
+                pageVC.currentIndex = indexPath.item // Start from the tapped photo
+                navigationController?.pushViewController(pageVC, animated: true)
+            }
         }
+    }
     
     
-//End of PhotosCollectionViewController
+    //End of PhotosCollectionViewController
 }
