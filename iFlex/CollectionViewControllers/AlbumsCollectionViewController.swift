@@ -22,7 +22,7 @@ class AlbumsCollectionViewController:
     
     var fetchedResultsController: NSFetchedResultsController<FitnessAlbum>!
     
- 
+    
     
     //MARK: ViewDidLoad
     
@@ -31,6 +31,9 @@ class AlbumsCollectionViewController:
         
         albumCollectionView.delegate = self
         albumCollectionView.dataSource = self
+        
+        let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPressGesture(_:)))
+        albumCollectionView.addGestureRecognizer(longPressGesture)
         
         setUpFetchedResultsController()
         do {
@@ -46,6 +49,17 @@ class AlbumsCollectionViewController:
             albumCollectionView.backgroundColor = UIColor(patternImage: gradientImage)
         }
         
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        NotificationCenter.default.addObserver(self, selector: #selector(updateAlbumCoverPhoto), name: Notification.Name("update"), object: nil)
+        navigationController?.isToolbarHidden = true
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        NotificationCenter.default.removeObserver(self)
     }
     
     //MARK: Setup Methods
@@ -76,7 +90,8 @@ class AlbumsCollectionViewController:
     
     func setUpFetchedResultsController() {
         let fetchRequest: NSFetchRequest<FitnessAlbum> = FitnessAlbum.fetchRequest()
-        let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: true)
+        //let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: true)
+        let sortDescriptor = NSSortDescriptor(key: "position", ascending: true)
         fetchRequest.sortDescriptors = [sortDescriptor]
         
         let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
@@ -96,18 +111,7 @@ class AlbumsCollectionViewController:
         }
     }
     
- 
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateAlbumCoverPhoto), name: Notification.Name("update"), object: nil)
-        navigationController?.isToolbarHidden = true
-    }
-    
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        NotificationCenter.default.removeObserver(self)
-    }
     
     //MARK:  User Actions
     
@@ -136,11 +140,21 @@ class AlbumsCollectionViewController:
     @objc func deleteAlbums() {
         print("Deleting Albums")
         
+        let alert = UIAlertController(title: "Delete Album", message: "Are you sure you want to delete the selected Album(s)?", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: { _ in
+            self.exitEditMode()
+        }))
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive, handler: { _ in
+            self.deleteSelectedAlbums()
+        }))
+        present(alert, animated: true, completion: nil)
+    }
+    
+    private func deleteSelectedAlbums() {
         guard let selectedIndexPaths = albumCollectionView.indexPathsForSelectedItems else {
             print("No items selected for deletion")
             return
         }
-        
         print("Selected items for deletion: \(selectedIndexPaths)")
         
         let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
@@ -168,6 +182,37 @@ class AlbumsCollectionViewController:
         }
         fetchedResultsController.delegate = self
         exitEditMode()
+        
+    }
+    
+    @objc func handleLongPressGesture(_ gesture: UILongPressGestureRecognizer) {
+        switch gesture.state {
+        case .began:
+            guard let selectedIndexPath = albumCollectionView.indexPathForItem(at: gesture.location(in: albumCollectionView)) else {
+                break
+            }
+            albumCollectionView.beginInteractiveMovementForItem(at: selectedIndexPath)
+        case .changed:
+            albumCollectionView.updateInteractiveMovementTargetPosition(gesture.location(in: albumCollectionView))
+        case .ended:
+            albumCollectionView.endInteractiveMovement()
+            saveNewOrderToCoreData()
+            // Refetch to update UI immediately after dragging ends
+            DispatchQueue.main.async {
+                self.refetchAndReloadData()
+            }
+        default:
+            albumCollectionView.cancelInteractiveMovement()
+        }
+    }
+    
+    func refetchAndReloadData() {
+        do {
+            try fetchedResultsController.performFetch()
+            albumCollectionView.reloadData()
+        } catch {
+            print("Failed to refetch albums after reordering: \(error)")
+        }
     }
     
     //MARK: Supporting methods
@@ -238,6 +283,13 @@ class AlbumsCollectionViewController:
         newAlbum.name = name
         newAlbum.creationDate = Date()
         
+        // Set the position as the last in the list
+        if let albums = fetchedResultsController.fetchedObjects {
+            newAlbum.position = Int16(albums.count)
+        } else {
+            newAlbum.position = 0
+        }
+        
         do {
             try context.save()
             
@@ -245,6 +297,32 @@ class AlbumsCollectionViewController:
             print("Failed to save Album: \(error)")
         }
         
+    }
+    
+    func saveNewOrderToCoreData() {
+        guard let albums = fetchedResultsController.fetchedObjects else { return }
+        
+        // Iterate through the albums and set the 'position' attribute to maintain the new order
+        for (index, album) in albums.enumerated() {
+            album.position = Int16(index)
+        }
+        
+        // Save the updated positions to Core Data
+        let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+        do {
+            try context.save()
+            print("Successfully saved new album order to Core Data.")
+        } catch {
+            print("Failed to save new album order: \(error)")
+        }
+        
+        // Refetch to update the fetched results controller and the collection view
+        do {
+            try fetchedResultsController.performFetch()
+            albumCollectionView.reloadData()
+        } catch {
+            print("Failed to refetch after reordering: \(error)")
+        }
     }
     
     
@@ -340,6 +418,66 @@ class AlbumsCollectionViewController:
         //albumCollectionView.performBatchUpdates(nil, completion: nil)
     }
     
+    override func collectionView(_ collectionView: UICollectionView, moveItemAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
+        guard var albums = fetchedResultsController.fetchedObjects else { return }
+        
+        // Update your data source
+        let movedAlbum = albums.remove(at: sourceIndexPath.item)
+        albums.insert(movedAlbum, at: destinationIndexPath.item)
+        
+        // Update the positions in Core Data
+        for (index, album) in albums.enumerated() {
+            album.position = Int16(index)
+        }
+        
+        let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+        do {
+            try context.save()
+            print("Successfully saved reordered albums.")
+        } catch {
+            print("Failed to save reordered albums: \(error)")
+        }
+        
+        // Refresh the UI by refetching data and reloading the collection view
+        DispatchQueue.main.async {
+            self.refetchAndReloadData()
+        }
+        
+        // Update cover photo and title for affected albums
+        updateAlbumCoverPhotoAndTitle(for: albums)
+        
+    }
+    
+    func updateAlbumCoverPhotoAndTitle(for albums: [FitnessAlbum]) {
+        guard let indexPaths = fetchedResultsController.indexPaths(for: albums) else {
+            print("Failed to get index paths for albums.")
+            return
+        }
+        
+        for (index, album) in albums.enumerated() {
+            if let albumPhotoData = album.coverPhoto, let image = UIImage(data: albumPhotoData) {
+                print("Updated cover photo for album: \(album.name ?? "Unknown")")
+                if let cell = albumCollectionView.cellForItem(at: indexPaths[index]) as? CollectionAlbumCell {
+                    cell.albumPhoto.image = image
+                    cell.albumName.text = album.name
+                }
+            } else {
+                print("No photo found for album: \(album.name ?? "Unknown")")
+                if let cell = albumCollectionView.cellForItem(at: indexPaths[index]) as? CollectionAlbumCell {
+                    cell.albumPhoto.image = UIImage(named: "defaultImage")
+                    cell.albumName.text = album.name ?? "Untitled Album"
+                }
+            }
+        }
+        UIView.transition(with: albumCollectionView, duration: 0.3, options: .transitionCrossDissolve, animations: {
+            self.albumCollectionView.reloadItems(at: indexPaths)
+        }, completion: nil)
+    }
+    
+    
+    
+    
+    
     
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if albumCollectionView.allowsMultipleSelection {
@@ -352,6 +490,7 @@ class AlbumsCollectionViewController:
     override func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
         
     }
+    
     
     
     //MARK: Segue
@@ -377,5 +516,4 @@ class AlbumsCollectionViewController:
     
     //End of AlbumsCollectionViewController
 }
-
 

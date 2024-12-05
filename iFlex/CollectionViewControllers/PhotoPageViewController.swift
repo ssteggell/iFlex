@@ -170,8 +170,15 @@ class PhotoPageViewController: UIPageViewController, UIPageViewControllerDataSou
             print("Invalid index for deletion")
             return
         }
-        
-        // Get the current context
+        let alert = UIAlertController(title: "Delete Photo", message: "Are you sure you want to delete this photo?", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive, handler: { _ in
+            self.deletePhoto()
+        }))
+        present(alert, animated: true, completion: nil)
+    }
+    
+    private func deletePhoto() {
         let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
         
         // Safely fetch the photo to delete using the fetchedResultsController
@@ -188,14 +195,14 @@ class PhotoPageViewController: UIPageViewController, UIPageViewControllerDataSou
             try context.save()
             print("Photo successfully deleted.")
             // Refetch the data after deletion to update the fetchedResultsController
-                    try fetchedResultsController.performFetch()
-                    
-                    // Update the photos and photoDates arrays with the latest data
-                    if let updatedPhotos = fetchedResultsController.fetchedObjects {
-                        photos = updatedPhotos.compactMap { UIImage(data: $0.imageData!) }
-                        photoDates = updatedPhotos.compactMap { $0.creationDate }
-                    }
-
+            try fetchedResultsController.performFetch()
+            
+            // Update the photos and photoDates arrays with the latest data
+            if let updatedPhotos = fetchedResultsController.fetchedObjects {
+                photos = updatedPhotos.compactMap { UIImage(data: $0.imageData!) }
+                photoDates = updatedPhotos.compactMap { $0.creationDate }
+            }
+            
             NotificationCenter.default.post(name: NSNotification.Name(rawValue: "load"), object: nil)
             
             // Handle empty photos case

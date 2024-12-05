@@ -4,6 +4,7 @@
         <attribute name="coverPhoto" optional="YES" attributeType="Binary"/>
         <attribute name="creationDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="position" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <relationship name="photos" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="ProgressPhotos" inverseName="album" inverseEntity="ProgressPhotos"/>
     </entity>
     <entity name="ProgressPhotos" representedClassName=".ProgressPhotos" syncable="YES">

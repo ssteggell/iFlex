@@ -2,7 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key></key>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>iFlex needs access to your photo library to allow you to add and manage your photos.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>iFlex needs access to your camera to help you take and track fitness progress photos, allowing you to visually compare your transformation over time.</string>
+	<key>Camera</key>
 	<string></string>
 	<key>UIAppFonts</key>
 	<array>

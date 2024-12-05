@@ -125,7 +125,19 @@ class PhotosCollectionViewController: UICollectionViewController, NSFetchedResul
     //MARK: Deleting photos
     
     @objc func deletePhotos() {
-        print("Deleting Albums")
+        print("Deleting photos")
+        
+        let alert = UIAlertController(title: "Delete Photo(s)", message: "Are you sure you want to delete the selected Photo(s)?", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: { _ in
+            self.exitEditMode()
+        }))
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive, handler: { _ in
+            self.deleteSelectedPhotos()
+        }))
+        present(alert, animated: true, completion: nil)
+    }
+    
+    private func deleteSelectedPhotos() {
         guard let selectedIndexPaths = photosCollectionView.indexPathsForSelectedItems else {
             print("No items selected for deletion")
             return
@@ -159,6 +171,7 @@ class PhotosCollectionViewController: UICollectionViewController, NSFetchedResul
         }
         fetchedResultsController.delegate = self
         exitEditMode()
+        
     }
     
     //MARK: Segue Compare Photos

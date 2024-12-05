@@ -313,8 +313,6 @@
 				INFOPLIST_FILE = iFlex/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = iFlex;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
-				INFOPLIST_KEY_NSCameraUsageDescription = "iFlex would like to access your Camera";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "iFlex would like to access your Photo Album";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -349,8 +347,6 @@
 				INFOPLIST_FILE = iFlex/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = iFlex;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
-				INFOPLIST_KEY_NSCameraUsageDescription = "iFlex would like to access your Camera";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "iFlex would like to access your Photo Album";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;

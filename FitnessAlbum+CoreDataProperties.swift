@@ -20,6 +20,7 @@ extension FitnessAlbum {
     @NSManaged public var creationDate: Date?
     @NSManaged public var name: String?
     @NSManaged public var photos: NSSet?
+    @NSManaged public var position: Int16
 
 }
 
@@ -37,6 +38,7 @@ extension FitnessAlbum {
 
     @objc(removePhotos:)
     @NSManaged public func removeFromPhotos(_ values: NSSet)
+    
 
 }
 

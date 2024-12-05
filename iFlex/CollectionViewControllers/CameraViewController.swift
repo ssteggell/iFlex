@@ -43,7 +43,8 @@ class CameraViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupPreviewContainerView()
-        setupCameraSession()
+        //setupCameraSession()
+        checkCameraAuthorizationStatus()
         setupUIElements()
         setupCountdownLabel()
         
@@ -66,7 +67,9 @@ class CameraViewController: UIViewController {
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        captureSession.stopRunning()
+        if let captureSession = captureSession, captureSession.isRunning {
+            captureSession.stopRunning()
+        }
         navigationController?.isToolbarHidden = false
     }
     
@@ -320,6 +323,71 @@ class CameraViewController: UIViewController {
     
     
     // MARK: - Helper Methods
+    
+    func checkCameraAuthorizationStatus() {
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            setupCameraSession()
+            setupUIElements()
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                guard granted else {
+                    self?.exitCameraView()
+                    return
+                }
+                DispatchQueue.main.async {
+                    self?.setupCameraSession()
+                    self?.setupUIElements()
+                }
+            }
+        case .denied, .restricted:
+            exitCameraView()
+        @unknown default:
+            exitCameraView()
+        }
+    }
+    
+    
+    func exitCameraView() {
+        let alertController = UIAlertController(
+            title: "Camera Access Required",
+            message: "To use the camera features of iFlex, please enable camera access in your device settings.",
+            preferredStyle: .alert
+        )
+        
+        // Add the "Settings" action that takes the user to the settings
+        let settingsAction = UIAlertAction(title: "Settings", style: .default) { (_) in
+            if let appSettings = URL(string: UIApplication.openSettingsURLString) {
+                if UIApplication.shared.canOpenURL(appSettings) {
+                    UIApplication.shared.open(appSettings)
+                }
+            }
+        }
+        
+        // Add a "Cancel" action that dismisses the view controller
+        let cancelAction = UIAlertAction(title: "OK", style: .default) { (_) in
+            if let navigationController = self.navigationController {
+                navigationController.popViewController(animated: true)
+            } else {
+                self.dismiss(animated: true, completion: nil)
+            }
+        }
+        
+        // Add actions to the alert controller
+        alertController.addAction(settingsAction)
+        alertController.addAction(cancelAction)
+        
+        // Present the alert controller
+        DispatchQueue.main.async {
+            self.present(alertController, animated: true, completion: nil)
+        }
+    }
+    //    func exitCameraView() {
+    //        DispatchQueue.main.async {
+    //                   self.navigationController?.popViewController(animated: true)
+    //               }
+    //    }
+    
     
     func setupCountdownLabel() {
         countdownLabel.translatesAutoresizingMaskIntoConstraints = false
